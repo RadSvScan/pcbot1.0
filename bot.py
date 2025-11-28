@@ -1,14 +1,19 @@
 import requests
 import time
 import base64
+import os
 
-TOKEN = "8563378881:AAEip6TZjLWoKUHNvg78RVrKOk6ie_JQ8w4"
+# токен только из GitHub Secrets
+TOKEN = os.getenv("TOKEN")
+if not TOKEN:
+    print("ERROR: TOKEN отсутствует. Добавь его в GitHub → Settings → Secrets → TOKEN")
+    exit()
+
 API = f"https://api.telegram.org/bot{TOKEN}/"
 FILE_API = f"https://api.telegram.org/file/bot{TOKEN}/"
 
-# режимы
-auto_mode = None        # hex/bin/base64/None
-always_file = False     # режим /filemode
+auto_mode = None
+always_file = False
 
 
 def get_updates(offset=None):
@@ -34,8 +39,6 @@ def download_file(file_id):
     return requests.get(FILE_API + file_path).content
 
 
-# -------- конвертация --------
-
 def to_hex(b): return b.hex()
 def to_bin(b): return "".join(f"{byte:08b}" for byte in b)
 def to_b64(b): return base64.b64encode(b).decode()
@@ -47,7 +50,6 @@ def convert(data, mode):
     return None
 
 
-# поиск {тип}
 def extract_mode(text):
     t = text.lower()
     if t.endswith("{hex}"): return "hex", text[:-5].rstrip()
@@ -56,25 +58,18 @@ def extract_mode(text):
     return None, text
 
 
-# ---------- стартовый текст ----------
 HELP_TEXT = """
-<b>Datapc converter</b>
+Datapc converter:
 
-Бот умеет:
-• текст + {hex} → hex  
-• текст + {bin} → binary  
-• текст + {base64} → base64  
-• любое сообщение + /file → ответ в .txt файле  
+{text} + {hex}
+{text} + {bin}
+{text} + {base64}
 
 Команды:
-/help – помощь  
-/hex – авто HEX режим  
-/bin – авто BIN режим  
-/base64 – авто BASE64 режим  
-/standart – ручной режим {тип}  
-/filemode – всегда отправлять .txt  
-/nofilemode – отправлять обычным текстом
-Для файлов (например фото) в описании напишите /file 
+/hex /bin /base64
+/standart
+/filemode /nofilemode
+/help
 """
 
 
@@ -92,54 +87,44 @@ while True:
             chat_id = msg.get("chat", {}).get("id")
             text = msg.get("text", "")
 
-            # ==========================
-            #  ОБРАБОТКА КОМАНД
-            # ==========================
             if text.startswith("/"):
                 cmd = text.lower()
 
-                if cmd == "/help" or cmd == "/start":
+                if cmd in ["/help", "/start"]:
                     send_message(chat_id, HELP_TEXT)
                     continue
 
                 if cmd == "/hex":
                     auto_mode = "hex"
-                    send_message(chat_id, "Авто-режим HEX включён.")
+                    send_message(chat_id, "HEX режим включён.")
                     continue
 
                 if cmd == "/bin":
                     auto_mode = "bin"
-                    send_message(chat_id, "Авто-режим BIN включён.")
+                    send_message(chat_id, "BIN режим включён.")
                     continue
 
                 if cmd == "/base64":
                     auto_mode = "base64"
-                    send_message(chat_id, "Авто-режим BASE64 включён.")
+                    send_message(chat_id, "BASE64 режим включён.")
                     continue
 
                 if cmd == "/standart":
                     auto_mode = None
-                    send_message(chat_id, "Ручной режим включён. Теперь используй {hex}/{bin}/{base64}")
+                    send_message(chat_id, "Обычный режим. Используй {hex}/{bin}/{base64}")
                     continue
 
                 if cmd == "/filemode":
                     always_file = True
-                    send_message(chat_id, "Опция отсылки кода в файле включена.")
+                    send_message(chat_id, "Всегда отправлять результат в .txt")
                     continue
 
                 if cmd == "/nofilemode":
                     always_file = False
-                    send_message(chat_id, "Опция отсылки кода в файле выключена.")
+                    send_message(chat_id, "Отправлять в чат без файла")
                     continue
 
-                # Пасхалка
-                if cmd == "/iloveyou":
-                    send_message(chat_id, "Я тебя тоже люблю 🤗❤️")
-                    continue
-
-            # ==========================
-            #  ТЕКСТ
-            # ==========================
+            # текст
             if "text" in msg:
                 mode, clean_text = extract_mode(text)
 
@@ -158,9 +143,7 @@ while True:
                     send_message(chat_id, result)
                 continue
 
-            # ==========================
-            #  ФАЙЛЫ + ФОТО
-            # ==========================
+            # файлы
             file_id = None
 
             if "photo" in msg:
@@ -193,4 +176,4 @@ while True:
 
                 continue
 
-    time.sleep(0.3)
+    time.sleep(0.2)
