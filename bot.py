@@ -58,18 +58,25 @@ def extract_mode(text):
     return None, text
 
 
+# ---------- стартовый текст ----------
 HELP_TEXT = """
-Datapc converter:
+<b>Datapc converter</b>
 
-{text} + {hex}
-{text} + {bin}
-{text} + {base64}
+Бот умеет:
+• текст + {hex} → hex  
+• текст + {bin} → binary  
+• текст + {base64} → base64  
+• любое сообщение + /file → ответ в .txt файле  
 
 Команды:
-/hex /bin /base64
-/standart
-/filemode /nofilemode
-/help
+/help – помощь  
+/hex – авто HEX режим  
+/bin – авто BIN режим  
+/base64 – авто BASE64 режим  
+/standart – ручной режим {тип}  
+/filemode – всегда отправлять .txt  
+/nofilemode – отправлять обычным текстом
+Для файлов (например фото) в описании напишите /file 
 """
 
 
