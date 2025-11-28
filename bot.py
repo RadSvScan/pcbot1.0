@@ -60,7 +60,7 @@ def extract_mode(text):
 
 # ---------- стартовый текст ----------
 HELP_TEXT = """
-<b>Datapc converter</b>
+
 
 Бот умеет:
 • текст + {hex} → hex  
